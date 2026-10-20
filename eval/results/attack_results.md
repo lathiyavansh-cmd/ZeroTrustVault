@@ -35,4 +35,4 @@
 
 ### Insider DB + store dump (`a6_insider`)
 - baseline: plaintext/editable at rest (marker_found=True); audit row edited, verify flagged nothing (undetected=True)
-- zerotrustvault: grep over 6 objects found NO marker; edited audit seq 55 -> verify flagged first_bad_seq=55
+- zerotrustvault: grep over 103 objects found NO marker; edited audit seq 9242 -> verify flagged first_bad_seq=9242

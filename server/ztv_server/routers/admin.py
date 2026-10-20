@@ -100,7 +100,8 @@ async def create_user(body: UserIn, request: Request, admin=Depends(require_admi
     db.add(u)
     await db.commit()
     await audit().log(actor=admin.user.id if admin else "admin-key", action="admin.user_create", resource=f"user:{u.username}", decision="INFO", reason="user created", ip=client_ip(request), details={"role": u.role, "department": u.department, "clearance": u.clearance})
-    return {**u.public(), "totp_secret": u.totp_secret}
+    # Provisioning secret: shown ONCE to the admin, who hands it to the user out-of-band (workflow A).
+    return {**u.public(), "totp_secret": u.totp_secret, "otpauth_uri": pyotp.TOTP(u.totp_secret).provisioning_uri(name=u.username, issuer_name="ZeroTrustVault")}
 
 
 # ---- cert requests ---------------------------------------------------------------------------

@@ -139,12 +139,11 @@ async def _finish_login(request: Request, db: AsyncSession, ticket: dict, amr: l
     if user is None or device is None:
         raise unauthorized("invalid_ticket")
     ip = client_ip(request)
-    try:
-        demo = int(request.headers.get("x-demo-risk") or ticket.get("demo_risk") or 0)
-    except ValueError:
-        demo = 0
+    # The session score is built from GENUINE signals only (new device / IP / hour / failures / geo).
+    # The demo-only `X-Demo-Risk` header is a per-request environment signal added by the PEP on each
+    # authorization, so it must not also be folded into the session score (it would double-count).
     geo = request.headers.get("x-demo-geo") or ticket.get("geo")
-    score, signals = await compute_risk(st, user.id, ip=ip, jkt=ticket["jkt"], geo=geo, demo_risk=demo)
+    score, signals = await compute_risk(st, user.id, ip=ip, jkt=ticket["jkt"], geo=geo, demo_risk=0)
     await st.clear_failed_logins(user.id)
     user.failed_logins = 0
     user.locked_until = None

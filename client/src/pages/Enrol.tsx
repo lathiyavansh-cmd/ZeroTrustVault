@@ -7,11 +7,13 @@ import { generatePrivateKeysPkcs8, importUserKeys, openPrivateKeys, sealPrivateK
 import { certFingerprint, verifyUserCert, type UserCert } from "../crypto/sign";
 import { b64uDecode } from "../crypto/encoding";
 import { registerPasskey } from "../api/webauthn";
+import { AlertBox, Badge, Button, Card, CopyButton, FingerprintDisplay, Icons, PageHead, Spinner, Stepper, useToast, type StepState } from "../components/ui";
 
 type CertReq = { status: "pending" | "confirmed" | "issued"; fingerprint: string; cert?: UserCert };
 
 export default function Enrol() {
   const { session, keys, setKeys, cert, setCert, orgRoot, mode } = useApp();
+  const toast = useToast();
   const user = session.user!;
   const [blob, setBlob] = useState<SealedBlob | null | "loading">("loading");
   const [pass, setPass] = useState("");
@@ -88,8 +90,8 @@ export default function Enrol() {
 
   const generate = async () => {
     setErr(null);
-    if (pass.length < 8) return setErr("passphrase must be at least 8 characters");
-    if (pass !== pass2) return setErr("passphrases do not match");
+    if (pass.length < 8) return setErr("Passphrase must be at least 8 characters.");
+    if (pass !== pass2) return setErr("Passphrases do not match.");
     setBusy("Generating keys and sealing with Argon2id (64 MiB)…");
     try {
       const sk = generatePrivateKeysPkcs8();
@@ -105,6 +107,7 @@ export default function Enrol() {
       setReqId(r.request_id);
       setPass("");
       setPass2("");
+      toast.success("Keys generated and sealed", "Certificate request submitted — confirm the fingerprint out-of-band.");
     } catch (e) {
       setErr((e as Error).message);
     } finally {
@@ -121,8 +124,9 @@ export default function Enrol() {
       await afterUnlock(k);
       setPass("");
       if (cert && (cert.enc_pk !== k.encPk || cert.sig_pk !== k.sigPk)) setErr("WARNING: unlocked keys do not match the issued certificate");
+      else toast.success("Keys unlocked", k.backend === "webcrypto" ? "Non-extractable Web Crypto keys for this session." : "@noble fallback — keys held in memory only.");
     } catch (e) {
-      setErr((e as Error).message);
+      setErr(`Could not open the key blob — wrong passphrase? (${(e as Error).message})`);
     } finally {
       setBusy(null);
     }
@@ -157,6 +161,7 @@ export default function Enrol() {
       setTotp(null);
       setTotpCode("");
       setMsg("TOTP confirmed.");
+      toast.success("TOTP confirmed");
     } catch (e) {
       setErr((e as Error).message);
     }
@@ -168,109 +173,159 @@ export default function Enrol() {
       const credential = await registerPasskey(options);
       await api.post("/api/auth/webauthn/register/verify", { credential });
       setMsg("Passkey registered.");
+      toast.success("Passkey registered");
     } catch (e) {
       setErr((e as Error).message);
     }
   };
 
-  const fpGroups = fingerprint ? fingerprint.split(" ") : null;
+  // Stepper state derivation
+  const haveBlob = blob !== "loading" && !!blob;
+  const stepKeys: StepState = keys ? "done" : haveBlob ? "active" : blob === "loading" ? "todo" : "active";
+  const stepBlob: StepState = haveBlob ? "done" : keys ? "active" : "todo";
+  const stepReq: StepState = cert || reqId ? "done" : keys ? "active" : "todo";
+  const stepWait: StepState = cert ? "done" : reqId ? "waiting" : "todo";
+  const stepIssued: StepState = cert ? "done" : "todo";
 
   return (
-    <div className="grid">
-      <div className="card">
-        <h2>Encryption keys</h2>
-        {!ztv && <p className="small muted">Baseline mode: the server encrypts with a static key; client keys are not used.</p>}
-        {blob === "loading" ? (
-          <p className="muted">Checking for a sealed key blob…</p>
-        ) : keys ? (
-          <>
-            <p className="okc">Keys unlocked for this session ({keys.backend === "webcrypto" ? "non-extractable Web Crypto keys" : "@noble fallback, held in memory only"}).</p>
-            <p className="small mono">enc_pk {keys.encPk}<br />sig_pk {keys.sigPk}</p>
-          </>
-        ) : blob ? (
-          <>
-            <p className="small">A sealed key blob exists (Argon2id m={blob.kdf.m} KiB, t={blob.kdf.t}, p={blob.kdf.p}). Unlock it with your key passphrase.</p>
-            <label>Key passphrase</label>
-            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === "Enter" && unlock()} />
-            <div className="row" style={{ marginTop: 8 }}>
-              <button className="primary" onClick={unlock} disabled={!!busy}>Unlock</button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="small">No keys yet. Generate an X25519 + Ed25519 pair; the private halves are sealed under an Argon2id-derived KEK before upload. The server only ever sees the sealed blob.</p>
-            <label>Key passphrase (≥ 8 chars)</label>
-            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} />
-            <label>Repeat</label>
-            <input type="password" value={pass2} onChange={(e) => setPass2(e.target.value)} />
-            <div className="row" style={{ marginTop: 8 }}>
-              <button className="primary" onClick={generate} disabled={!!busy}>Generate &amp; seal</button>
-            </div>
-          </>
-        )}
-        {busy && <p className="muted small">{busy}</p>}
-        {err && <p className="err small">{err}</p>}
-      </div>
+    <>
+      <PageHead title="Enrol / Keys" sub={ztv ? "Client-side X25519 + Ed25519 keys, sealed under an Argon2id passphrase; the org CA issues your certificate offline." : "Baseline mode: the server encrypts with a static key; client keys are not used."} />
+      <div className="grid-2">
+        <div className="stack">
+          <Card title="Enrolment progress" sub={`${user.username} · ${user.role} · ${user.department}`}>
+            <Stepper
+              steps={[
+                { title: "Generate or unlock keys", state: stepKeys, body: keys ? `Unlocked (${keys.backend === "webcrypto" ? "Web Crypto, non-extractable" : "@noble fallback, in memory"})` : haveBlob ? "A sealed blob exists — unlock it with your passphrase" : "No keys on the server yet" },
+                { title: "Upload sealed key blob", state: stepBlob, body: blob !== "loading" && blob ? `Argon2id m=${blob.kdf.m} KiB, t=${blob.kdf.t}, p=${blob.kdf.p} — server only holds ciphertext` : "Private halves are sealed before upload" },
+                { title: "Submit certificate request", state: stepReq, body: reqId ? <span className="mono">request {reqId.slice(0, 8)}…</span> : "Public keys are sent to the org CA" },
+                {
+                  title: "Out-of-band fingerprint confirmation",
+                  state: stepWait,
+                  body: cert ? "Confirmed" : reqId ? (
+                    <span className="row"><Spinner /> {reqStatus?.status === "confirmed" ? "confirmed — waiting for the offline CA signer to publish the cert…" : "waiting for an administrator to confirm your fingerprint…"}</span>
+                  ) : "Read your fingerprint to the administrator over a trusted channel",
+                },
+                { title: "Certificate issued", state: stepIssued, body: cert ? <span>serial <span className="mono">{cert.serial}</span>, expires {cert.exp}</span> : "Needed before you can upload or share" },
+              ]}
+            />
+          </Card>
 
-      <div className="card">
-        <h2>Certificate (Org CA, offline)</h2>
-        <p className="small muted">Pinned root: <span className="mono">{orgRoot.b64u || "—"}</span> {orgRoot.pinned ? "(build-time pin)" : <b className="err">unpinned (dev)</b>}</p>
-        {fpGroups && (
-          <>
-            <p className="small">Your key fingerprint — confirm it out-of-band with the administrator:</p>
-            <div className="fp">{fpGroups.map((g, i) => <span key={i}>{g} </span>)}</div>
-          </>
-        )}
-        {cert ? (
-          <p style={{ marginTop: 10 }}>
-            <span className={`badge ${certVerified === false ? "bad" : certVerified ? "ok" : "warn"}`}>
-              cert issued: serial {cert.serial}, exp {cert.exp} — {certVerified === null ? "not verified (no root)" : certVerified ? "verified against pinned root" : "SIGNATURE INVALID"}
-            </span>
-          </p>
-        ) : reqId ? (
-          <p style={{ marginTop: 10 }}>
-            <span className="badge warn">request {reqId.slice(0, 8)}…: {reqStatus?.status ?? "pending"}</span>{" "}
-            <span className="muted small">{reqStatus?.status === "confirmed" ? "confirmed — waiting for the offline CA signer to publish the cert…" : "waiting for out-of-band confirmation…"}</span>
-          </p>
-        ) : keys ? (
-          <button onClick={requestCert} disabled={!!busy}>Request certificate</button>
-        ) : (
-          <p className="muted small">Unlock or generate keys first.</p>
-        )}
-      </div>
-
-      <div className="card">
-        <h2>Second factors</h2>
-        <div className="row">
-          <button onClick={totpSetup}>Set up TOTP</button>
-          <button onClick={passkey} disabled={!("credentials" in navigator)}>Register passkey (WebAuthn)</button>
+          <Card title="Encryption keys" actions={keys && <Badge tone="ok">unlocked</Badge>}>
+            {blob === "loading" ? (
+              <p className="muted row"><Spinner /> Checking for a sealed key blob…</p>
+            ) : keys ? (
+              <>
+                <AlertBox tone="ok">Keys unlocked for this session ({keys.backend === "webcrypto" ? "non-extractable Web Crypto keys" : "@noble fallback, held in memory only"}).</AlertBox>
+                <table className="kv mt3">
+                  <tbody>
+                    <tr><th>enc_pk (X25519)</th><td className="mono small" style={{ wordBreak: "break-all" }}>{keys.encPk}</td></tr>
+                    <tr><th>sig_pk (Ed25519)</th><td className="mono small" style={{ wordBreak: "break-all" }}>{keys.sigPk}</td></tr>
+                  </tbody>
+                </table>
+              </>
+            ) : blob ? (
+              <>
+                <p className="small muted mb4">A sealed key blob exists on the server. Unlock it with your key passphrase — the KEK is derived locally and the blob never leaves the browser in the clear.</p>
+                <div className="field">
+                  <label htmlFor="kp">Key passphrase</label>
+                  <input id="kp" type="password" value={pass} autoComplete="current-password" onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === "Enter" && unlock()} />
+                </div>
+                <div className="row mt3">
+                  <Button variant="primary" onClick={unlock} busy={!!busy} icon={Icons.key({ size: 14 })}>Unlock keys</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="small muted mb4">No keys yet. Generate an X25519 + Ed25519 pair; the private halves are sealed under an Argon2id-derived KEK before upload. The server only ever sees the sealed blob.</p>
+                <div className="field">
+                  <label htmlFor="np">Key passphrase (≥ 8 chars)</label>
+                  <input id="np" type="password" value={pass} autoComplete="new-password" onChange={(e) => setPass(e.target.value)} />
+                </div>
+                <div className="field">
+                  <label htmlFor="np2">Repeat passphrase</label>
+                  <input id="np2" type="password" value={pass2} autoComplete="new-password" onChange={(e) => setPass2(e.target.value)} aria-invalid={!!pass2 && pass !== pass2} />
+                </div>
+                <div className="row mt3">
+                  <Button variant="primary" onClick={generate} busy={!!busy}>Generate &amp; seal</Button>
+                </div>
+              </>
+            )}
+            {busy && <p className="muted small mt3 row"><Spinner /> {busy}</p>}
+            {err && <div className="mt3"><AlertBox tone="bad">{err}</AlertBox></div>}
+          </Card>
         </div>
-        {totp && (
-          <div style={{ marginTop: 10 }}>
-            <img src={totp.qr} alt="TOTP QR" width={180} height={180} />
-            <p className="small mono">secret: {totp.secret}</p>
-            <label>Code from authenticator</label>
-            <input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} inputMode="numeric" />
-            <div className="row" style={{ marginTop: 8 }}>
-              <button className="primary" onClick={totpConfirm}>Confirm</button>
-            </div>
-          </div>
-        )}
-        {msg && <p className="okc small">{msg}</p>}
-      </div>
 
-      <div className="card">
-        <h2>Session</h2>
-        <table>
-          <tbody>
-            <tr><th>user</th><td>{user.username} ({user.role}, {user.department}, clearance {user.clearance})</td></tr>
-            <tr><th>device id</th><td className="mono">{session.deviceId ?? "—"}</td></tr>
-            <tr><th>token</th><td>{session.tokenType}{session.tokenType === "DPoP" ? ", 5-min, auto-refresh" : ", 30-day bearer"}</td></tr>
-            <tr><th>clock skew</th><td>{api.skewSeconds}s (from X-Server-Time)</td></tr>
-            <tr><th>elevated until</th><td>{session.elevatedUntil ?? "—"}</td></tr>
-          </tbody>
-        </table>
+        <div className="stack">
+          <Card title="Certificate" sub="Issued offline by the Org CA" actions={cert ? <Badge tone={certVerified === false ? "bad" : certVerified ? "ok" : "warn"}>{certVerified === null ? "not verified (no root)" : certVerified ? "verified" : "SIGNATURE INVALID"}</Badge> : reqId ? <Badge tone="warn">{reqStatus?.status ?? "pending"}</Badge> : null}>
+            <div className="small muted mb4">
+              Pinned org root: <span className="mono" style={{ wordBreak: "break-all" }}>{orgRoot.b64u || "—"}</span>{" "}
+              {orgRoot.pinned ? <Badge tone="ok">build-time pin</Badge> : <Badge tone="warn">unpinned (dev)</Badge>}
+            </div>
+            {fingerprint && (
+              <div className="mb4">
+                <label>Your key fingerprint — confirm it out-of-band with the administrator</label>
+                <FingerprintDisplay fp={fingerprint} />
+              </div>
+            )}
+            {cert ? (
+              <table className="kv">
+                <tbody>
+                  <tr><th>serial</th><td className="mono small">{cert.serial}</td></tr>
+                  <tr><th>expires</th><td>{cert.exp}</td></tr>
+                  <tr><th>verification</th><td>{certVerified === null ? "not verified (no root)" : certVerified ? <span className="okc">verified against pinned org root</span> : <span className="err">SIGNATURE INVALID</span>}</td></tr>
+                </tbody>
+              </table>
+            ) : reqId ? (
+              <AlertBox tone="warn">
+                Request <span className="mono">{reqId.slice(0, 8)}…</span> is <b>{reqStatus?.status ?? "pending"}</b>. {reqStatus?.status === "confirmed" ? "Waiting for the offline CA signer to publish the certificate." : "Waiting for out-of-band fingerprint confirmation by an administrator."}
+              </AlertBox>
+            ) : keys ? (
+              <Button onClick={requestCert} busy={!!busy}>Request certificate</Button>
+            ) : (
+              <p className="muted small">Unlock or generate keys first.</p>
+            )}
+          </Card>
+
+          <Card title="Second factors">
+            <div className="row">
+              <Button onClick={totpSetup}>Set up TOTP</Button>
+              <Button onClick={passkey} disabled={!("credentials" in navigator)} icon={Icons.key({ size: 14 })}>Register passkey (WebAuthn)</Button>
+            </div>
+            {totp && (
+              <div className="mt4">
+                <div className="row" style={{ alignItems: "flex-start" }}>
+                  <span className="qr"><img src={totp.qr} alt="TOTP QR code" width={180} height={180} style={{ display: "block" }} /></span>
+                  <div className="grow">
+                    <label>Secret</label>
+                    <div className="row"><code>{totp.secret}</code><CopyButton text={totp.secret} /></div>
+                    <div className="field mt3">
+                      <label htmlFor="totpc">Code from authenticator</label>
+                      <input id="totpc" value={totpCode} onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" />
+                    </div>
+                    <div className="row mt3">
+                      <Button variant="primary" onClick={totpConfirm} disabled={totpCode.length < 6}>Confirm</Button>
+                      <Button variant="ghost" onClick={() => setTotp(null)}>Cancel</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {msg && <p className="okc small mt3">{msg}</p>}
+          </Card>
+
+          <Card title="Session">
+            <table className="kv">
+              <tbody>
+                <tr><th>user</th><td>{user.username} <span className="muted">({user.role}, {user.department}, clearance {user.clearance})</span></td></tr>
+                <tr><th>device id</th><td className="mono small">{session.deviceId ?? "—"}</td></tr>
+                <tr><th>token</th><td>{session.tokenType}{session.tokenType === "DPoP" ? " · 5-min · auto-refresh" : " · 30-day bearer"}</td></tr>
+                <tr><th>clock skew</th><td><span className={Math.abs(api.skewSeconds) > 30 ? "warnc" : ""}>{api.skewSeconds}s</span> <span className="muted">(from X-Server-Time)</span></td></tr>
+                <tr><th>elevated until</th><td>{session.elevatedUntil ?? "—"}</td></tr>
+              </tbody>
+            </table>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
