@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "name": "ZeroTrustVault default policy (Acme Research Labs)",
+  "combining": "deny-overrides, then first PERMIT, else default DENY",
+  "rules": [
+    {
+      "id": "deny-employment-ended",
+      "effect": "DENY",
+      "description": "Subjects whose employment has ended get no access (contractor/auditor off-boarding)",
+      "all": [{"attr": "subject.employment_active", "op": "false"}]
+    },
+    {
+      "id": "deny-high-risk",
+      "effect": "DENY",
+      "description": "Session risk score >= 85 is denied outright",
+      "all": [{"attr": "environment.risk_score", "op": ">=", "value": 85}]
+    },
+    {
+      "id": "deny-revoked-cert",
+      "effect": "DENY",
+      "description": "Subjects whose user certificate was revoked cannot access file content",
+      "all": [{"attr": "subject.cert_revoked", "op": "true"}]
+    },
+    {
+      "id": "deny-untrusted-device-for-secret",
+      "effect": "DENY",
+      "description": "SECRET files require a trusted device posture",
+      "all": [
+        {"attr": "resource.level", "op": ">=", "value": 3},
+        {"attr": "device.posture", "op": "!=", "value": "trusted"},
+        {"attr": "resource.owner_id", "op": "!=", "value": "subject.id"}
+      ]
+    },
+    {
+      "id": "permit-owner",
+      "effect": "PERMIT",
+      "description": "The owner of a file may always read it on a registered device",
+      "all": [
+        {"attr": "resource.owner_id", "op": "==", "value": "subject.id"},
+        {"attr": "device.registered", "op": "true"}
+      ]
+    },
+    {
+      "id": "permit-grant",
+      "effect": "PERMIT",
+      "description": "A valid, unexpired, owner-signed grant with downloads left; clearance >= classification; same department or auditor role; posture satisfied",
+      "all": [
+        {"attr": "grant.present", "op": "true"},
+        {"attr": "grant.signature_ok", "op": "true"},
+        {"attr": "grant.expired", "op": "false"},
+        {"attr": "grant.downloads_left", "op": ">", "value": 0},
+        {"attr": "grant.posture_ok", "op": "true"},
+        {"attr": "action.intent", "op": "in", "value": "grant.rights"},
+        {"attr": "subject.clearance", "op": ">=", "value": "resource.level"},
+        {"attr": "subject.employment_active", "op": "true"},
+        {"attr": "device.registered", "op": "true"}
+      ],
+      "any": [
+        {"attr": "subject.department", "op": "==", "value": "resource.department"},
+        {"attr": "subject.role", "op": "==", "value": "auditor"}
+      ]
+    }
+  ],
+  "obligations": {
+    "step_up_required": "environment.risk_score >= 60 and not subject.mfa_fresh",
+    "deny": "environment.risk_score >= 85"
+  },
+  "notes": "Admins do NOT get file content access by default: there is no admin PERMIT rule."
+}

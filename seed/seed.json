@@ -1,0 +1,19 @@
+{
+  "org": "Acme Research Labs",
+  "departments": ["research", "finance", "audit", "it"],
+  "classifications": {"PUBLIC": 0, "INTERNAL": 1, "CONFIDENTIAL": 2, "SECRET": 3},
+  "users": [
+    {"username": "admin", "password": "Admin-Pass-123", "role": "admin", "department": "it", "clearance": 3},
+    {"username": "alice", "password": "Alice-Pass-123", "role": "manager", "department": "research", "clearance": 3},
+    {"username": "bob", "password": "Bob-Pass-123", "role": "analyst", "department": "research", "clearance": 2},
+    {"username": "carol", "password": "Carol-Pass-123", "role": "manager", "department": "finance", "clearance": 2},
+    {"username": "dan", "password": "Dan-Pass-123", "role": "auditor", "department": "audit", "clearance": 2, "employment_end_days": 30}
+  ],
+  "key_users": ["alice", "bob", "carol", "dan"],
+  "files": [
+    {"key": "q3_results", "name": "q3-results.pdf", "owner": "alice", "classification": "CONFIDENTIAL", "size": 6291456, "share_with": [{"recipient": "bob", "rights": ["view", "download"], "expires_in_days": 7, "max_downloads": 10}]},
+    {"key": "lab_notes", "name": "lab-notes.txt", "owner": "alice", "classification": "INTERNAL", "size": 4096},
+    {"key": "payroll", "name": "payroll.csv", "owner": "carol", "classification": "SECRET", "size": 8192}
+  ],
+  "marker": "ZTV-PLAINTEXT-MARKER"
+}

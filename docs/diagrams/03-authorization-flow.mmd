@@ -1,0 +1,37 @@
+%% ZeroTrustVault — Per-request authorization: every failure path is default-deny and logged.
+flowchart TD
+  REQ["Incoming request<br/>POST /files/{id}/access"] --> TLS{"TLS 1.3<br/>channel + SPKI pin OK?"}
+  TLS -- no --> D0["connection refused"]
+  TLS -- yes --> TOK{"access token valid?<br/>EdDSA sig + exp (5 min)"}
+  TOK -- no --> DENY
+  TOK -- yes --> SESS{"session alive in Redis?<br/>(not revoked)"}
+  SESS -- no --> DENY
+  SESS -- yes --> DP{"DPoP proof signature OK?"}
+  DP -- no --> DENY
+  DP -- yes --> HTM{"htm + htu match<br/>this method + URL?"}
+  HTM -- no --> DENY
+  HTM -- yes --> TS{"iat within +/- 60 s?"}
+  TS -- no --> DENY
+  TS -- yes --> NONCE{"jti unseen?<br/>Redis SETNX, 120 s"}
+  NONCE -- no --> DENYR["401 replayed nonce"]
+  NONCE -- yes --> ATH{"ath == SHA-256(token)<br/>cnf.jkt == proof thumbprint?"}
+  ATH -- no --> DENY
+  ATH -- yes --> ATTR["Collect attributes<br/>subject · device · resource · environment · grant"]
+  ATTR --> RISK{"risk score"}
+  RISK -- ">= 85" --> DENY
+  RISK -- "60..84 and not mfa_fresh" --> STEP["401 step_up_required"]
+  RISK -- "< 60 or mfa_fresh" --> PDP{"PDP: RBAC + ABAC<br/>deny-overrides, then first PERMIT"}
+  PDP -- "no rule / explicit DENY" --> DENY["403 forbidden (generic)"]
+  PDP -- PERMIT --> OUT["200: manifest + wrapped DEK<br/>+ 60 s ciphertext URLs"]
+
+  LOG["Audit log (hash-chained)"]
+  DENY -.-> LOG
+  DENYR -.-> LOG
+  STEP -.-> LOG
+  OUT -.-> LOG
+  classDef bad fill:#fee2e2,stroke:#dc2626;
+  classDef good fill:#dcfce7,stroke:#16a34a;
+  classDef log fill:#fef9c3,stroke:#ca8a04;
+  class D0,DENY,DENYR bad
+  class OUT good
+  class LOG log

@@ -1,0 +1,164 @@
+{
+ "canonical_json": {
+  "obj": {
+   "z": 1,
+   "a": {
+    "y": [
+     3,
+     {
+      "b": true,
+      "a": null
+     }
+    ],
+    "x": "\u00fc\u2028\"\\"
+   },
+   "m": "ascii"
+  },
+  "bytes_b64u": "eyJhIjp7IngiOiLDvOKAqFwiXFwiLCJ5IjpbMyx7ImEiOm51bGwsImIiOnRydWV9XX0sIm0iOiJhc2NpaSIsInoiOjF9"
+ },
+ "aad": {
+  "file_id": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+  "version": 7,
+  "index": 3,
+  "final": true,
+  "aad_b64u": "WlRWMQ8eLTxLWml4h5altMPS4fAAAAAHAAAAAwE"
+ },
+ "nonce": {
+  "prefix_b64u": "AAECAwQFBgc",
+  "index": 258,
+  "nonce_b64u": "AAECAwQFBgcAAAEC"
+ },
+ "chunks": {
+  "dek_b64u": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "prefix_b64u": "AAECAwQFBgc",
+  "file_id": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+  "version": 2,
+  "plain_b64u": [
+   "aGVsbG8gY2h1bmsgemVybw",
+   "",
+   "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eA"
+  ],
+  "ct_b64u": [
+   "QWE6CB0jKE73g5e3FPFOivYO_gY1mWBbDKtOu2yTLRE",
+   "zPjYr-LMRNDuLmQ85wnIbQ",
+   "3-C32skjh73BD_acR1GQ3RHgh8IfoblkgfsSRZywO1GeqJp2xmHMt90bLQMdQIz0UDKUUOw3nVMO_ZEAHfXe-5MW3f8WUg_Xl5rsEw_W4lHkF0yYjuDuqzrZPCODHUxC6hB2TdbYV3g062YpBLpd8iPw0UQ"
+  ],
+  "merkle_root_b64u": "_yxPWRNpWCdz_8UNZA82omPrrWBxirsNptXertcRYQ8",
+  "leaves_b64u": [
+   "eUDwLogmVIuHPSGI1ryUUj06KdBCC1UFoS9yjWB4ELI",
+   "4Aa87BQ8zWKpVn-_Xc74MUv3AYMmbDTygUTMvC99Ro4",
+   "FU35rHiEjdK2szGkBD9JOhvPpL2ggCLYWGPP0HtdiXc"
+  ]
+ },
+ "merkle_5": {
+  "chunks_b64u": [
+   "AA",
+   "AQE",
+   "AgIC",
+   "AwMDAw",
+   "BAQEBAQ"
+  ],
+  "root_b64u": "GJBehiELrWlPbqSeRO6wdunxDf3rykQjXnsQ16Eu-I8"
+ },
+ "hkdf_info": {
+  "file_id": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+  "version": 3,
+  "info_b64u": "WlRWLURFSy13cmFwLXYxDx4tPEtaaXiHlqW0w9Lh8AAAAAM"
+ },
+ "wrap": {
+  "recipient_sk_pkcs8_b64u": "MC4CAQAwBQYDK2VuBCIEIAcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcH",
+  "recipient_pk_b64u": "E75P6uryBMf9M1j8nAByGIHRdCeBKCJ-xnTzf3_pe20",
+  "dek_b64u": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "file_id": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+  "version": 3,
+  "record": {
+   "alg": "X25519-HKDF-SHA256-A256KW",
+   "epk": "cDPQtPxd2a2CF0obigee3W3yNwY_vQCjuK2_nlFvSXc",
+   "wrapped": "DjntUIPC0GbIOY1e2wHAeva0bcsoYLp3fuF9UpJwRQdblnZrtHpt3Q"
+  }
+ },
+ "blob": {
+  "passphrase": "correct horse",
+  "blob": {
+   "v": 1,
+   "kdf": {
+    "name": "argon2id",
+    "m": 1024,
+    "t": 1,
+    "p": 1,
+    "salt": "AAECAwQFBgcICQoLDA0ODw"
+   },
+   "cipher": "AES-256-GCM",
+   "iv": "gpdY3Tg9BE3vfK_k",
+   "ct": "NgfElGVntpYTkWHqVqAjoXLNjZyLGO0q3X8ZkUjJewDV7dzkSX1jCVl12uqqrKETQnVyXBSj6vHmss5_Fo-zO2FL2T5ScZ09PftTRI-f48u0EhZb_l0GKkwRVL4cMIZorG8ldPou9tbeHJAnZ_lFoyPLIDe1Gk0go_VRsEFpZHFj3SpTFOmCFG0EPCwZoFwFdM7jM5cD1_DLWnpwI51teMsQbAS6jw6zMw"
+  },
+  "enc_pk_b64u": "V9tLNZ8jrl4Ubk4lEgVnBHIlBjSMFQwUdT0Mkz0E1CE",
+  "sig_pk_b64u": "Zr5-Myx6RTMyvZ0Kf32wVfXF7xoGraZtmLOftoEMRzo",
+  "enc_sk_pkcs8_b64u": "MC4CAQAwBQYDK2VuBCIEIAkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJ",
+  "sig_sk_pkcs8_b64u": "MC4CAQAwBQYDK2VwBCIEIAsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsL"
+ },
+ "manifest": {
+  "signed": {
+   "file_id": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+   "version": 2,
+   "name": "q3-results.pdf",
+   "size": 116,
+   "classification": "CONFIDENTIAL",
+   "merkle_root": "_yxPWRNpWCdz_8UNZA82omPrrWBxirsNptXertcRYQ8",
+   "chunk_count": 3,
+   "chunk_size": 4194304,
+   "cipher": "AES-256-GCM",
+   "nonce_prefix": "AAECAwQFBgc",
+   "owner_id": "11111111-2222-3333-4444-555555555555",
+   "timestamp": "2026-10-20T14:03:00Z",
+   "signature": "u8czs6iWyn8dk7dL7olceSOEgExUuOuZUgP7ABTyqp9vd2tx07THoV-6Y__UEG-y5QJhMNe-HGfP6v6wLsDpBw"
+  },
+  "owner_sig_pk_b64u": "Zr5-Myx6RTMyvZ0Kf32wVfXF7xoGraZtmLOftoEMRzo"
+ },
+ "grant": {
+  "signed": {
+   "grant_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+   "file_id": "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0",
+   "owner_id": "11111111-2222-3333-4444-555555555555",
+   "recipient_id": "66666666-7777-8888-9999-000000000000",
+   "rights": [
+    "view",
+    "download"
+   ],
+   "expires_at": "2026-11-20T14:03:00Z",
+   "max_downloads": 5,
+   "required_posture": "registered",
+   "issued_at": "2026-10-20T14:03:00Z",
+   "signature": "KixmCU0KjalpnmOSEx0pPEY6ptLzJABnqSVjY6AgF49yxqpGKb6Re4XbRogyZHhMa-p_m8cE8teJX6L2axfxBg"
+  },
+  "owner_sig_pk_b64u": "Zr5-Myx6RTMyvZ0Kf32wVfXF7xoGraZtmLOftoEMRzo"
+ },
+ "cert": {
+  "root_pk_b64u": "kaKKC3Q4FZOk2UaVeSCJJq_IrYLIg5t2RDWbnrqaSzo",
+  "cert": {
+   "serial": "serial-1",
+   "user_id": "66666666-7777-8888-9999-000000000000",
+   "username": "bob",
+   "enc_pk": "V9tLNZ8jrl4Ubk4lEgVnBHIlBjSMFQwUdT0Mkz0E1CE",
+   "sig_pk": "Zr5-Myx6RTMyvZ0Kf32wVfXF7xoGraZtmLOftoEMRzo",
+   "iat": "2026-10-20T14:12:47Z",
+   "exp": "2126-09-26T14:12:47Z",
+   "issuer": "ztv-org-root",
+   "signature": "kJXsne3t48sZoXzUurhTrTO232loUChCd1owuU06nm3x-0RQJuwO17MwunAhLvuN1ejuEW6xz7aYiL2tQYi0DQ"
+  },
+  "fingerprint": "B127 E26D 8ED2 6931 4253 6544 0DAC 8267"
+ },
+ "dpop": {
+  "jwk": {
+   "kty": "EC",
+   "crv": "P-256",
+   "x": "-X_sIVrdMRhAxF1fHEg1E2kJoEuao1fxWztCWT2vu-g",
+   "y": "v3zNjZ1BOOQ0SOGAW5_fRBy9VPfJp99HlB71euD4FzE"
+  },
+  "jkt": "ydXYVjkfTNHq-imdGoJODEYAcjBTQ3yrXK0ZDHBhrDI",
+  "ath_of_abc": "ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0"
+ },
+ "audit": {
+  "genesis_b64u": "aUqt0_xMB6FbHhgcLMAeVWw6XrkRyrxMl95YxqOV2sA"
+ }
+}

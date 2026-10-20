@@ -1,0 +1,11 @@
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
+WORKDIR /app
+COPY crypto/pyproject.toml /app/crypto/pyproject.toml
+COPY crypto/ztv_crypto /app/crypto/ztv_crypto
+COPY server/requirements.txt /app/server/requirements.txt
+RUN pip install -r /app/server/requirements.txt && pip install -e /app/crypto
+COPY server /app/server
+COPY seed /app/seed
+ENV PYTHONPATH=/app/server
+WORKDIR /app/server

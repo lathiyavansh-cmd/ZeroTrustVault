@@ -1,0 +1,46 @@
+%% ZeroTrustVault — System Architecture: four zones that fail separately.
+flowchart LR
+  subgraph CZ["Client Zone — ONLY place plaintext + private keys exist"]
+    UI["React + TypeScript UI"]
+    ENG["Web Crypto engine<br/>non-extractable keys"]
+    WRK["Web Workers<br/>streaming encrypt/decrypt"]
+    IDB[("IndexedDB<br/>device key (non-extractable)")]
+    UI --- ENG --- WRK
+    ENG --- IDB
+  end
+
+  subgraph CP["Control Plane (untrusted for confidentiality) — NIST SP 800-207"]
+    NGINX["Nginx — TLS 1.3 only<br/>HSTS, SPKI pinning (PEP edge)"]
+    API["FastAPI gateway (PEP)<br/>authN · DPoP · replay window"]
+    PDP["PDP — hybrid RBAC + ABAC<br/>default-deny · risk · step-up"]
+    AUD["Audit service<br/>hash chain + signed checkpoints"]
+    NGINX -->|mTLS| API --> PDP
+    API --> AUD
+  end
+
+  subgraph DP["Data Plane — ciphertext only"]
+    PG[("PostgreSQL 16<br/>manifests · policies · wrapped keys<br/>grants · users · audit log")]
+    MINIO[("MinIO (S3)<br/>ciphertext chunks")]
+    REDIS[("Redis 7<br/>DPoP nonce cache · sessions · risk")]
+  end
+
+  subgraph SEC["Security Operations / Offline"]
+    ROOT["Org Root Key (Ed25519) — OFFLINE<br/>ca-signer / ztv-ca CLI only"]
+    DASH["Live dashboard<br/>decisions · denials · alerts · chain status"]
+    WONCE[("Write-once checkpoint store<br/>audit-checkpoints bucket")]
+  end
+
+  CZ -->|"TLS 1.3 + DPoP on every request<br/>Authorization: DPoP + DPoP proof"| NGINX
+  PDP --> PG
+  API --> MINIO
+  API --> REDIS
+  AUD --> PG
+  AUD --> WONCE
+  ROOT -. "signs user certs (out-of-band confirmed)" .-> PG
+  DASH -. reads .-> API
+  classDef trust fill:#dcfce7,stroke:#16a34a;
+  classDef untrust fill:#fee2e2,stroke:#dc2626;
+  classDef offline fill:#e0e7ff,stroke:#4338ca;
+  class CZ trust
+  class DP,CP untrust
+  class SEC offline

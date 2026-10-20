@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+client/dist/
+infra/certs/*.crt
+infra/certs/*.key
+infra/certs/*.sha256
+infra/keys/server/
+infra/keys/org_root.json
+seed/generated/
+eval/results/*.png
+eval/results/*.csv
+eval/results/*.json
+.env
+.pytest_cache/
+*.egg-info/

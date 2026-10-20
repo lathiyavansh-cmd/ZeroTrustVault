@@ -1,0 +1,66 @@
+:root {
+  --bg: #0f1115;
+  --panel: #171a21;
+  --panel2: #1e222b;
+  --border: #2b3140;
+  --fg: #e6e8ee;
+  --muted: #8b93a7;
+  --accent: #5b8def;
+  --ok: #3cc17a;
+  --warn: #e6b450;
+  --bad: #e5534b;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel2: #eef0f4;
+    --border: #d5d9e2;
+    --fg: #15181f;
+    --muted: #5d6475;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+a { color: var(--accent); text-decoration: none; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+.topbar { display: flex; align-items: center; gap: 16px; padding: 8px 16px; background: var(--panel); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.topbar nav a { margin-right: 12px; color: var(--fg); opacity: 0.8; }
+.topbar nav a.active { color: var(--accent); opacity: 1; font-weight: 600; }
+.brand { font-weight: 700; letter-spacing: 0.5px; }
+.secbar { display: flex; gap: 8px; flex-wrap: wrap; padding: 6px 16px; background: var(--panel2); border-bottom: 1px solid var(--border); font-size: 12px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); white-space: nowrap; }
+.badge.ok { border-color: var(--ok); color: var(--ok); }
+.badge.warn { border-color: var(--warn); color: var(--warn); }
+.badge.bad { border-color: var(--bad); color: var(--bad); }
+.badge.accent { border-color: var(--accent); color: var(--accent); }
+main { padding: 16px; max-width: 1200px; margin: 0 auto; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+.card h2, .card h3 { margin: 0 0 10px; font-size: 15px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
+input, select, textarea { width: 100%; padding: 7px 9px; background: var(--bg); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+textarea.mono { font-family: var(--mono); font-size: 12px; min-height: 240px; }
+button { padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel2); color: var(--fg); cursor: pointer; font: inherit; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { border-color: var(--bad); color: var(--bad); }
+button:disabled { opacity: 0.5; cursor: default; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.muted { color: var(--muted); }
+.err { color: var(--bad); }
+.okc { color: var(--ok); }
+.fp { font-family: var(--mono); font-size: 16px; letter-spacing: 1px; word-spacing: 6px; padding: 8px; background: var(--bg); border-radius: 6px; display: inline-block; }
+.progress { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
+.progress > div { height: 100%; background: var(--accent); transition: width 0.2s; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.kpi { background: var(--panel2); border-radius: 8px; padding: 10px; }
+.kpi .n { font-size: 26px; font-weight: 700; }
+.kpi .l { font-size: 12px; color: var(--muted); }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.modal { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 18px; width: min(560px, 92vw); max-height: 90vh; overflow: auto; }
+.small { font-size: 12px; }
+.login { max-width: 420px; margin: 60px auto; }

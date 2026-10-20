@@ -1,0 +1,35 @@
+%% ZeroTrustVault — Key hierarchy (4 levels). A stolen lower key is useless without the control plane.
+flowchart TD
+  subgraph L0["Level 0 — Organization Root (OFFLINE)"]
+    ROOT["Ed25519 Org Root<br/>cryptoperiod 2 years<br/>signs every user cert"]
+  end
+  subgraph L1["Level 1 — User keys (client-side, yearly)"]
+    UENC["X25519 encryption key pair"]
+    USIG["Ed25519 signing key pair"]
+    DEV["Device key — ECDSA P-256<br/>NON-extractable (Web Crypto)"]
+    KEK["Private halves sealed under<br/>KEK = Argon2id(passphrase)<br/>m=64 MiB, t=3, p=1"]
+  end
+  subgraph L2["Level 2 — Per-file-version DEK"]
+    DEK["AES-256 DEK (random per version)<br/>never stored in plaintext"]
+    WRAP["Wrapped per recipient:<br/>ECDH(X25519) -> HKDF-SHA256 -> AES-KW"]
+  end
+  subgraph L3["Level 3 — Data + integrity"]
+    CH["4 MiB chunks<br/>AES-256-GCM (STREAM AAD)"]
+    MT["Merkle tree (SHA-256)<br/>over ciphertext chunks"]
+    MAN["Manifest {file-id, version, size,<br/>classification, Merkle root, ts}<br/>signed Ed25519 by owner"]
+  end
+
+  ROOT -->|certifies| UENC
+  ROOT -->|certifies| USIG
+  UENC --> KEK
+  USIG --> KEK
+  DEV -. "proves possession (DPoP)" .-> UENC
+  UENC -->|"recipient pk wraps"| WRAP
+  WRAP --> DEK
+  DEK --> CH
+  CH --> MT --> MAN
+  USIG -->|signs| MAN
+  classDef offline fill:#e0e7ff,stroke:#4338ca;
+  classDef client fill:#dcfce7,stroke:#16a34a;
+  class L0 offline
+  class L1 client

@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  crypto-and-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ./crypto
+          pip install -r server/requirements.txt
+          pip install pytest pytest-asyncio fakeredis bandit semgrep
+      - name: Crypto unit tests
+        run: python -m pytest crypto/tests -q
+      - name: Server unit tests (no docker)
+        run: python -m pytest server/tests -q -k "not live"
+      - name: Primitive benchmark (smoke)
+        run: python eval/bench_primitives.py --iters 20 --sizes 1 4 --no-charts --out eval/results
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install bandit semgrep
+      - name: Bandit
+        run: bandit -q -r server/ztv_server crypto/ztv_crypto -x tests,crypto/tests || true
+      - name: Semgrep
+        run: semgrep --error --config p/python --config p/owasp-top-ten --config p/secrets server crypto attack-lab || true
+
+  client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build + typecheck + crypto vectors
+        working-directory: client
+        run: |
+          npm install --no-audit --no-fund
+          npx tsc --noEmit
+          npm run build
+          npm test --if-present
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring up the stack
+        run: |
+          cp .env.example .env
+          docker compose up -d --build postgres redis minio certs-init api ca-signer
+          docker compose run --rm seed
+      - name: Attack demo (both modes) — all rows must PASS
+        run: docker compose --profile attack run --rm attack-lab python runner.py --both-modes
+      - name: Audit chain intact
+        run: docker compose --profile attack run --rm attack-lab python /eval/run_eval.py --audit-integrity
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail 200
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

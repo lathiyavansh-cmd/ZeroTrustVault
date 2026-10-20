@@ -1,0 +1,49 @@
+%% ZeroTrustVault — End-to-end message flow: login -> upload -> share -> re-verified access.
+sequenceDiagram
+  autonumber
+  actor A as Alice (owner, client)
+  participant G as Gateway (PEP)
+  participant P as PDP
+  participant DB as PostgreSQL
+  participant S as MinIO
+  participant CA as Offline Org CA
+  actor B as Bob (recipient, client)
+
+  Note over A,G: Login + MFA (TLS 1.3 + DPoP)
+  A->>G: POST /auth/login {pwd, device jwk}
+  G-->>A: mfa_required (login_ticket)
+  A->>G: POST /auth/mfa/totp {ticket, code} + DPoP
+  G-->>A: access_token (5 min, cnf.jkt) + refresh
+
+  Note over A,CA: Enrolment (first device)
+  A->>A: generate X25519 + Ed25519, seal under Argon2id KEK
+  A->>G: PUT /keys/blob (sealed) ; POST /keys/cert-request {pub keys}
+  G->>CA: pending request (fingerprint)
+  CA->>CA: admin confirms fingerprint out-of-band
+  CA->>DB: publish Org-root-signed cert
+
+  Note over A,S: Secure upload (workflow B)
+  A->>A: DEK=rand; chunks AES-256-GCM; Merkle root; sign manifest; wrap DEK for self
+  A->>G: POST /files + PUT chunks + finalize(manifest,wrapped_dek) + DPoP
+  G->>P: authorize(upload)
+  P-->>G: PERMIT
+  G->>G: verify manifest signature vs Alice cert
+  G->>S: store ciphertext chunks
+  G->>DB: store manifest + wrapped DEK
+
+  Note over A,B: Sharing (workflow C)
+  A->>G: GET /keys/directory/bob
+  G-->>A: Bob cert
+  A->>A: verify Bob cert vs PINNED org root, wrap DEK for Bob, sign grant
+  A->>G: POST /shares {grant, wrapped_dek}
+  G->>G: verify grant signature vs Alice cert -> store
+
+  Note over B,S: Access — every request re-verified (workflow D)
+  B->>G: POST /files/{id}/access + token + DPoP(jti,htm,htu,iat,ath)
+  G->>G: token ok? session alive? DPoP sig? htu? iat +/-60s? jti unseen?
+  G->>P: attributes {subject,device,resource,env,grant}
+  P-->>G: PERMIT (or DENY / step_up_required)
+  G->>DB: audit decision (chained)
+  G-->>B: manifest + wrapped DEK + 60s chunk URLs
+  B->>S: GET ciphertext (60s URL)
+  B->>B: verify manifest sig + Merkle root, unwrap DEK, decrypt; any GCM fail -> abort
