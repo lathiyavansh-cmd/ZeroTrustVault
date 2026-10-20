@@ -165,8 +165,8 @@ def slide_attacks(title: str, caption: str) -> Image.Image:
         for i, line in enumerate(textwrap.wrap(by, 44)[:3]):
             d.text((cols[3], y + i * 22), line, font=fs, fill=FG)
         d.text((cols[4], y), "PASS" if ok else "FAIL", font=font(20, bold=True), fill=GREEN if ok else RED)
-        y += 86
-    d.text((60, y + 6), f"{sum(1 for r in rows if r[4])}/{len(rows)} attacks PASS: baseline SUCCEEDS, ZeroTrustVault BLOCKS", font=font(20, bold=True), fill=GREEN)
+        y += 78
+    d.text((60, y + 4), f"{sum(1 for r in rows if r[4])}/{len(rows)} attacks PASS: baseline SUCCEEDS, ZeroTrustVault BLOCKS", font=font(20, bold=True), fill=GREEN)
     return im
 
 
