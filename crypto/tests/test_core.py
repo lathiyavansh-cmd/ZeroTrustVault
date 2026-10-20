@@ -45,6 +45,7 @@ from ztv_crypto.audit import HashChain, sign_checkpoint, verify_chain
 from ztv_crypto.ca import load_org_root, save_org_root
 from ztv_crypto.dpop import DPoPError
 from ztv_crypto.kdf import Argon2Params
+from ztv_crypto.encoding import sha256
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 
@@ -56,6 +57,39 @@ def test_canonical_json_is_deterministic():
     assert canonical_json({"b": 1, "a": [1, {"z": None, "y": "é"}]}) == '{"a":[1,{"y":"é","z":null}],"b":1}'.encode("utf-8")
     with pytest.raises(TypeError):
         canonical_json({"x": 1.5})
+
+
+def test_b64u_roundtrip_and_url_safety():
+    # round-trips every length, including ones that would normally need "=" padding
+    for n in range(0, 40):
+        data = os.urandom(n)
+        enc = b64u(data)
+        assert "=" not in enc
+        assert b64u_decode(enc) == data
+    # bytes that standard base64 encodes as "+" and "/" must become "-" and "_"
+    assert b64u(b"\xfb\xff") == "-_8"
+    assert b64u_decode("-_8") == b"\xfb\xff"
+    assert b64u(b"") == ""
+
+
+def test_canonical_json_rejects_unsafe_input_and_hashes_match():
+    # key order in the input must not change the output (signatures depend on this)
+    assert canonical_json({"a": 1, "b": 2}) == canonical_json({"b": 2, "a": 1})
+    # booleans, null and tuples serialise predictably
+    assert canonical_json({"t": True, "n": None, "l": (1, 2)}) == b'{"l":[1,2],"n":null,"t":true}'
+    # floats are rejected even when nested deep inside lists/dicts
+    with pytest.raises(TypeError):
+        canonical_json({"outer": [{"inner": 0.1}]})
+    # non-string dict keys are rejected
+    with pytest.raises(TypeError):
+        canonical_json({1: "x"})
+    # unsupported types (bytes, sets) are rejected
+    with pytest.raises(TypeError):
+        canonical_json({"raw": b"\x00"})
+    with pytest.raises(TypeError):
+        canonical_json({"s": {1, 2}})
+    # sha256 matches the standard NIST test vector for "abc"
+    assert sha256(b"abc").hex() == "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
 
 
 def test_chunk_roundtrip_and_aad_binding():
