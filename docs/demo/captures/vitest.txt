@@ -1,0 +1,7 @@
+ RUN  v2.1.9 D:/manan/zerotrustvault/client
+ ✓ src/test/noble-fallback.test.ts (2 tests) 44ms
+ ✓ src/test/vectors.test.ts (16 tests) 31ms
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+   Start at  21:20:36
+   Duration  660ms (transform 119ms, setup 0ms, collect 211ms, tests 75ms, environment 0ms, prepare 208ms)
