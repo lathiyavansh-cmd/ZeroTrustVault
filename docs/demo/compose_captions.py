@@ -13,8 +13,9 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
-W, H = 1280, 720
-BAR_H = 112
+W, H = 1920, 1080  # overridden from captions.json
+BAR_H = 150
+SCALE = 1.0
 
 
 def font(size: int, bold: bool = False):
@@ -28,17 +29,17 @@ def render_caption(text: str, path: Path) -> None:
     """Lower third: translucent dark band with a thin accent line, white text up to two lines."""
     im = Image.new("RGBA", (W, BAR_H), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    # gradient band
-    for y in range(BAR_H):
-        a = int(min(1.0, y / 18) * 190)
+    s = SCALE
+    for y in range(BAR_H):  # gradient band
+        a = int(min(1.0, y / (18 * s)) * 190)
         d.line((0, y, W, y), fill=(8, 11, 20, a))
-    d.rectangle((40, 30, 44, BAR_H - 24), fill=(99, 128, 255, 255))
-    f = font(23)
+    d.rectangle((int(40 * s), int(30 * s), int(44 * s), BAR_H - int(24 * s)), fill=(99, 128, 255, 255))
+    f = font(int(23 * s))
     lines = textwrap.wrap(text, 92)[:2]
-    y = 34 if len(lines) > 1 else 44
+    y = int((34 if len(lines) > 1 else 44) * s)
     for line in lines:
-        d.text((58, y), line, font=f, fill=(240, 243, 250, 255))
-        y += 32
+        d.text((int(58 * s), y), line, font=f, fill=(240, 243, 250, 255))
+        y += int(32 * s)
     im.save(path)
 
 
@@ -53,6 +54,10 @@ def main(argv=None) -> int:
     ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
     rec = Path(a.rec)
     meta = json.loads((rec / "captions.json").read_text())
+    global W, H, BAR_H, SCALE
+    W, H = int(meta.get("width", 1280)), int(meta.get("height", 720))
+    SCALE = W / 1280.0
+    BAR_H = int(112 * SCALE)
     video = Path(meta["video"])
     caps = meta["captions"]
     duration = float(meta["duration"])
@@ -74,7 +79,7 @@ def main(argv=None) -> int:
         prev = out
     filter_complex = ";".join(chains)
     cmd = [ffmpeg, "-y", "-loglevel", "error", *inputs, "-filter_complex", filter_complex, "-map", prev,
-           "-r", "30", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", str(a.out)]
+           "-r", "30", "-c:v", "libx264", "-preset", "slow", "-crf", "17", "-profile:v", "high", "-level", "4.1", "-pix_fmt", "yuv420p", "-movflags", "+faststart", "-an", str(a.out)]
     subprocess.run(cmd, check=True)
     size = Path(a.out).stat().st_size / 1e6
     print(f"wrote {a.out}  ({duration/60:.1f} min, {size:.1f} MB, {len(caps)} captions)")

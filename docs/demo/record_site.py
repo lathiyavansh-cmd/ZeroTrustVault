@@ -58,12 +58,12 @@ class Recorder:
             self.pause(0.12)
 
 
-def run(base: str, out_dir: Path) -> None:
+def run(base: str, out_dir: Path, width: int = 1920, height: int = 1080) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="msedge", headless=True)
-        ctx = browser.new_context(viewport={"width": 1280, "height": 720}, color_scheme="dark",
-                                  record_video_dir=str(out_dir), record_video_size={"width": 1280, "height": 720})
+        ctx = browser.new_context(viewport={"width": width, "height": height}, color_scheme="dark", device_scale_factor=1,
+                                  record_video_dir=str(out_dir), record_video_size={"width": width, "height": height})
         page = ctx.new_page()
         R = Recorder(page)
         page.goto(f"{base}/login")
@@ -194,7 +194,7 @@ def run(base: str, out_dir: Path) -> None:
         ctx.close()
         browser.close()
     video = next(out_dir.glob("*.webm"))
-    (out_dir / "captions.json").write_text(json.dumps({"video": str(video), "duration": duration, "captions": R.caps}, indent=2))
+    (out_dir / "captions.json").write_text(json.dumps({"video": str(video), "duration": duration, "width": width, "height": height, "captions": R.caps}, indent=2))
     print(f"recorded {video} ({duration:.1f}s, {len(R.caps)} captions)")
 
 
@@ -202,8 +202,10 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:5173")
     ap.add_argument("--out", default=str(ROOT / "docs" / "demo" / "build" / "record"))
+    ap.add_argument("--width", type=int, default=1920)
+    ap.add_argument("--height", type=int, default=1080)
     a = ap.parse_args()
     out = Path(a.out)
     for old in out.glob("*.webm"):
         old.unlink()
-    run(a.base, out)
+    run(a.base, out, a.width, a.height)
