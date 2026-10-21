@@ -1,4 +1,4 @@
-"""Extra security-property tests for the ZeroTrustVault crypto core (M10).
+"""Extra advanced security-property tests for the ZeroTrustVault crypto core (M10).
 
 Complements test_core.py: randomized tamper detection, key separation,
 manifest/Merkle binding, DPoP proof uniqueness and password-hash salting.
