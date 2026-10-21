@@ -4,7 +4,7 @@
 |---|---|
 | **Phase 1 – Problem Identification** | The problem-identification document(s) you already submitted on Moodle (not part of this repository). |
 | **Phase 2 – Demonstration Video** | `docs/demo/ZeroTrustVault-demo.mp4` — a screen recording of the running product with explanatory captions (no slides, no voice): login + MFA, enrolment and the offline CA, key unlock, client-side encrypted upload with the integrity verdict, verified sharing, grants, the live dashboard and audit chain, settings, and administration (certificate confirmation, user provisioning, policy, mode switch). Captions over the dashboard state the evaluation and test results. |
-| **GitHub Repository Link** | https://github.com/lathiyavansh-cmd/zerotrustvault (private; evaluators must be added as collaborators, or switch the repository to public under Settings → General → Danger zone → Change visibility). |
+| **GitHub Repository Link** | https://github.com/lathiyavansh-cmd/zerotrustvault (public; no login needed to view, clone or download). |
 
 ## Regenerating the video
 
