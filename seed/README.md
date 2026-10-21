@@ -1,4 +1,5 @@
 # Seed data
+Team and module ownership: see docs/TEAM.md. Testing guide: docs/TESTING.md. Attack lab details: docs/ATTACK_LAB.md.
 
 This folder holds the seed data used to populate a fresh ZeroTrustVault
 environment for development and the attack-lab demo.
