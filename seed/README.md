@@ -19,3 +19,9 @@ certificates and sample files.
 ## Generated files
 Credentials, TOTP secrets and keys are written to `seed/generated/`.
 These are dev-only, are listed in `.gitignore`, and must never be committed.
+
+
+## Re-seeding
+To reset the data and start fresh, run `make down` (this wipes volumes) and
+then `make up`, which rebuilds the stack and seeds it again. Seed data is for
+development and the attack-lab demo only.
