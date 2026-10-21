@@ -1,6 +1,17 @@
 {
   "group": "VSV23",
-  "title": "ZeroTrustVault: Zero-Trust Secure File Sharing and Access-Control System",
+  "title": "ZeroTrustVault: Secure File Sharing and Access Control System",
   "github": "https://github.com/lathiyavansh-cmd/zerotrustvault",
-  "members": []
+  "members": [
+    {"name": "Ekaagra Agarwal", "uid": "2024300001"},
+    {"name": "Jai Boricha", "uid": "2024300025"},
+    {"name": "Daivik Choksi", "uid": "2024300030"},
+    {"name": "Vivan Dhoka", "uid": "2024300048"},
+    {"name": "Shrut Diwakar", "uid": "2024300051"},
+    {"name": "Dheer Kedia", "uid": "2024300110"},
+    {"name": "Vansh Lathiya", "uid": "2024300124"},
+    {"name": "Bhavya Limbani", "uid": "2024300125"},
+    {"name": "Dharmil Mehta", "uid": "2024300135"},
+    {"name": "Vedant Mehta", "uid": "2024300138"}
+  ]
 }
